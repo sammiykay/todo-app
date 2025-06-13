@@ -1,13 +1,17 @@
 import React from 'react';
-import { CheckSquare } from 'lucide-react';
+import { CheckSquare, LogOut } from 'lucide-react';
 import { AddTodo } from './components/AddTodo';
 import { TodoList } from './components/TodoList';
 import { ThemeToggle } from './components/ThemeToggle';
+import { Auth } from './components/Auth';
 import { useTodos } from './hooks/useTodos';
+import { useAuth } from './hooks/useAuth';
 
 function App() {
+  const { user, loading: authLoading, signOut } = useAuth();
   const {
     todos,
+    loading: todosLoading,
     addTodo,
     updateTodo,
     deleteTodo,
@@ -21,6 +25,25 @@ function App() {
   const handleEditTodo = (id: string, text: string) => {
     updateTodo(id, { text });
   };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Auth />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
@@ -36,11 +59,20 @@ function App() {
                 TodoFlow
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Stay organized, stay productive
+                Welcome back, {user.email}
               </p>
             </div>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={handleSignOut}
+              className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200"
+              aria-label="Sign out"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -71,16 +103,23 @@ function App() {
         </div>
 
         {/* Todo List */}
-        <TodoList
-          todos={todos}
-          onToggle={toggleTodo}
-          onDelete={deleteTodo}
-          onEdit={handleEditTodo}
-          onReorder={reorderTodos}
-          onClearCompleted={clearCompleted}
-          editingId={editingId}
-          setEditingId={setEditingId}
-        />
+        {todosLoading ? (
+          <div className="text-center py-12">
+            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-600 dark:text-slate-400">Loading your todos...</p>
+          </div>
+        ) : (
+          <TodoList
+            todos={todos}
+            onToggle={toggleTodo}
+            onDelete={deleteTodo}
+            onEdit={handleEditTodo}
+            onReorder={reorderTodos}
+            onClearCompleted={clearCompleted}
+            editingId={editingId}
+            setEditingId={setEditingId}
+          />
+        )}
       </div>
     </div>
   );
